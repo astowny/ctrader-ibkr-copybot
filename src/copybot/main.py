@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
     # Câblage des modules (chacun s'abonne aux topics qui le concernent).
     receiver = SignalReceiver(bus)
     ConfirmationFilter(bus, max_open_positions=settings.max_open_positions)
-    engine = ExecutionEngine(bus, build_broker(settings))
+    engine = ExecutionEngine(bus, build_broker(settings, bus))
 
     app.include_router(get_router(receiver))
 

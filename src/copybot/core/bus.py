@@ -47,5 +47,7 @@ class EventBus:
 SIGNAL_RECEIVED = "signal.received"
 SIGNAL_CONFIRMED = "signal.confirmed"
 ORDER_EXECUTED = "order.executed"
+POSITION_OPENED = "position.opened"  # une position vient d'être ouverte (exposition +1)
+POSITION_CLOSED = "position.closed"  # une position s'est fermée (SL/TP/manuel) → exposition -1
 
 bus = EventBus()

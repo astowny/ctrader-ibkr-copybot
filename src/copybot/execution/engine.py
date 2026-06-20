@@ -7,7 +7,13 @@ le résultat et publie `order.executed`. La sélection du broker se fait par con
 from __future__ import annotations
 
 from ..config import Settings
-from ..core.bus import ORDER_EXECUTED, SIGNAL_CONFIRMED, EventBus
+from ..core.bus import (
+    ORDER_EXECUTED,
+    POSITION_CLOSED,
+    POSITION_OPENED,
+    SIGNAL_CONFIRMED,
+    EventBus,
+)
 from ..core.logging import get_logger
 from ..core.models import Confirmation, OrderResult, OrderStatus
 from .brokers.base import BaseBroker
@@ -18,10 +24,14 @@ from .brokers.paper import PaperBroker
 log = get_logger("execution")
 
 
-def build_broker(settings: Settings) -> BaseBroker:
+def build_broker(settings: Settings, bus: EventBus | None = None) -> BaseBroker:
     match settings.broker.lower():
         case "ctrader":
-            return CTraderBroker(settings)
+            async def _on_closed(position_id: int) -> None:
+                if bus is not None:
+                    await bus.publish(POSITION_CLOSED, position_id)
+
+            return CTraderBroker(settings, on_position_closed=_on_closed)
         case "ibkr":
             return IBKRBroker(settings)
         case _:
@@ -62,3 +72,8 @@ class ExecutionEngine:
             result.status.value, result.broker_order_id, result.detail,
         )
         await self._bus.publish(ORDER_EXECUTED, result)
+
+        # Un ordre rempli issu d'un signal ouvre une position → exposition +1.
+        # (Les fermetures côté broker — SL/TP/manuel — arrivent via POSITION_CLOSED.)
+        if result.status is OrderStatus.FILLED:
+            await self._bus.publish(POSITION_OPENED, result)

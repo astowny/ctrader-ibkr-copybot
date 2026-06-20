@@ -29,8 +29,26 @@ de tester, déployer et faire évoluer chaque étage indépendamment.
 | **3. Moteur d'exécution** | Passage d'ordre asynchrone, reconnexion auto, journalisation complète. | [`src/copybot/execution/`](src/copybot/execution/) |
 
 Les connecteurs broker implémentent une interface commune ([`brokers/base.py`](src/copybot/execution/brokers/base.py)) :
-- **cTrader** (Open API / Pepperstone) — [`ctrader.py`](src/copybot/execution/brokers/ctrader.py)
-- **IBKR** (TWS / Gateway) — [`ibkr.py`](src/copybot/execution/brokers/ibkr.py)
+- **paper** — simulation, ✅ par défaut, aucune dépendance.
+- **cTrader** (Open API / Pepperstone) — ✅ **implémenté** ([`ctrader.py`](src/copybot/execution/brokers/ctrader.py) + client asyncio [`ctrader_client.py`](src/copybot/execution/brokers/ctrader_client.py)) : TLS + protobuf, auth, résolution de symboles, ordres marché, SL/TP, suivi d'exécution, heartbeat. Réutilise les messages protobuf du package `ctrader-open-api` (pas Twisted).
+- **IBKR** (TWS / Gateway) — ⛔ squelette ([`ibkr.py`](src/copybot/execution/brokers/ibkr.py)) à implémenter.
+
+### Activer cTrader
+
+```bash
+pip install -r requirements-ctrader.txt          # dépendance protobuf (optionnelle)
+# .env :
+BROKER=ctrader
+CTRADER_CLIENT_ID=...        # portail openapi.ctrader.com
+CTRADER_CLIENT_SECRET=...
+CTRADER_ACCESS_TOKEN=...     # OAuth (Playground = le plus simple)
+CTRADER_ACCOUNT_ID=...       # ctidTraderAccountId (numérique)
+CTRADER_HOST=demo.ctraderapi.com
+CTRADER_PORT=5035
+```
+
+Le champ `volume` du signal est interprété en **lots** (1.0 = 1 lot) ; la conversion en
+volume protocole (unités × 100) est pilotée par le `lotSize` du symbole.
 
 ## Points clés
 

@@ -6,6 +6,10 @@ requires-python = ">=3.11"
 readme = "README.md"
 license = { text = "MIT" }
 
+[project.optional-dependencies]
+# Connecteur cTrader (réutilise les messages protobuf). Voir requirements-ctrader.txt.
+ctrader = ["ctrader-open-api>=0.9.2"]
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"

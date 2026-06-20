@@ -9,7 +9,13 @@ indicateurs réels (tendance, volatilité, exposition, sessions de marché…).
 
 from __future__ import annotations
 
-from ..core.bus import SIGNAL_CONFIRMED, SIGNAL_RECEIVED, EventBus
+from ..core.bus import (
+    POSITION_CLOSED,
+    POSITION_OPENED,
+    SIGNAL_CONFIRMED,
+    SIGNAL_RECEIVED,
+    EventBus,
+)
 from ..core.logging import get_logger
 from ..core.models import Confirmation, Signal
 
@@ -22,6 +28,22 @@ class ConfirmationFilter:
         self._max_open_positions = max_open_positions
         self._open_positions = 0
         bus.subscribe(SIGNAL_RECEIVED, self.on_signal)
+        # Le compteur d'exposition est maintenant alimenté par les événements réels
+        # de position (ouverture/fermeture) — le garde-fou max_open_positions est actif.
+        bus.subscribe(POSITION_OPENED, self.on_position_opened)
+        bus.subscribe(POSITION_CLOSED, self.on_position_closed)
+
+    @property
+    def open_positions(self) -> int:
+        return self._open_positions
+
+    async def on_position_opened(self, _payload: object) -> None:
+        self._open_positions += 1
+        log.debug("Exposition: +1 → %d position(s) ouverte(s)", self._open_positions)
+
+    async def on_position_closed(self, _payload: object) -> None:
+        self._open_positions = max(0, self._open_positions - 1)
+        log.debug("Exposition: -1 → %d position(s) ouverte(s)", self._open_positions)
 
     async def on_signal(self, signal: Signal) -> None:
         confirmation = self._evaluate(signal)
@@ -44,6 +66,3 @@ class ConfirmationFilter:
             return Confirmation(signal=signal, approved=False, reason="volume invalide")
 
         return Confirmation(signal=signal, approved=True, reason="ok")
-
-    def register_fill(self) -> None:
-        self._open_positions += 1

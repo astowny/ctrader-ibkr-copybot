@@ -1,0 +1,8 @@
+# Dépendance OPTIONNELLE — uniquement si BROKER=ctrader.
+# On ne réutilise que les classes protobuf générées (pas le réacteur Twisted du package).
+#
+# Le package épingle protobuf==3.20.1 et Twisted==24.3.0. Si l'install entre en conflit
+# avec d'autres libs protobuf, deux options :
+#   1) installer dans un venv isolé (recommandé) ;
+#   2) export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python  (force l'impl pure Python).
+ctrader-open-api>=0.9.2

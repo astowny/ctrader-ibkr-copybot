@@ -1,0 +1,21 @@
+# Nixpacks build config — consumed by Dokploy (or Railway/Coolify/any Nixpacks builder).
+#
+# The repo ALSO ships a Dockerfile. In Dokploy you pick ONE build type:
+#   • Build Type = Dockerfile  → uses ./Dockerfile (recommended, full control)
+#   • Build Type = Nixpacks    → uses this file
+#
+# The start command is the important bit: the app lives under ./src and is served
+# as `copybot.main:app`, so we pass --app-dir src and bind to the platform port.
+
+[phases.setup]
+nixPkgs = ["python311"]
+
+[phases.install]
+cmds = ["pip install --no-cache-dir -r requirements.txt"]
+
+[start]
+cmd = "uvicorn copybot.main:app --host 0.0.0.0 --port ${PORT:-8000} --app-dir src"
+
+[variables]
+PYTHONUNBUFFERED = "1"
+PYTHONDONTWRITEBYTECODE = "1"
